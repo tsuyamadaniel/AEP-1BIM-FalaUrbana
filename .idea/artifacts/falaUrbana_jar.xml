@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="falaUrbana:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/falaUrbana_jar</output-path>
+    <root id="archive" name="falaUrbana.jar">
+      <element id="module-output" name="falaUrbana" />
+    </root>
+  </artifact>
+</component>
