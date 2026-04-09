@@ -1,4 +1,4 @@
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
 
@@ -6,42 +6,155 @@ public class Main {
 
         Scanner sc = new Scanner(System.in);
         ServicoSolicitacoes servico = new ServicoSolicitacoes();
+        List<Usuario> usuarios = new ArrayList<>();
 
-        System.out.println("===== SISTEMA DE SOLICITAÇÕES =====");
+        // usuário gestor padrão
+        usuarios.add(new Usuario("Admin", TipoUsuario.GESTOR, "000", "admin@email.com", "admin"));
+        usuarios.add(new Usuario("User", TipoUsuario.CIDADAO, "000", "user@email.com", "user"));
 
-        Usuario usuario = escolherTipoUsuario(sc);
+        boolean sistemaRodando = true;
 
-        if (usuario.getTipo() == TipoUsuario.GESTOR) {
-            menuGestor(sc, servico, usuario);
-        } else {
-            menuUsuario(sc, servico, usuario);
+        while (sistemaRodando) {
+
+            System.out.println("\n===== SISTEMA DE SOLICITAÇÕES =====");
+            System.out.println("1 - Cidadão");
+            System.out.println("2 - Anônimo");
+            System.out.println("3 - Gestor");
+            System.out.println("0 - Encerrar sistema");
+            System.out.print("Escolha: ");
+
+            int tipo = sc.nextInt();
+            sc.nextLine();
+
+            if (tipo == 0) {
+                sistemaRodando = false;
+                break;
+            }
+
+            Usuario usuario = null;
+
+            if (tipo == 1 || tipo == 3) {
+
+                TipoUsuario tipoUsuario = (tipo == 1) ? TipoUsuario.CIDADAO : TipoUsuario.GESTOR;
+
+                System.out.println("1 - Login");
+                System.out.println("2 - Cadastrar");
+                System.out.print("Escolha: ");
+
+                int op = sc.nextInt();
+                sc.nextLine();
+
+                if (op == 1) {
+                    usuario = login(sc, tipoUsuario, usuarios);
+                    if (usuario == null) continue;
+
+                } else if (op == 2) {
+                    usuario = cadastrar(sc, tipoUsuario, usuarios);
+
+                } else {
+                    System.out.println("Opção inválida!");
+                    continue;
+                }
+
+            } else if (tipo == 2) {
+                usuario = new Usuario(TipoUsuario.ANONIMO);
+
+            } else {
+                System.out.println("Opção inválida!");
+                continue;
+            }
+
+            // chama menus
+            if (usuario.getTipo() == TipoUsuario.GESTOR) {
+                menuGestor(sc, servico, usuario);
+            } else {
+                menuUsuario(sc, servico, usuario);
+            }
         }
 
         sc.close();
+        System.out.println("Sistema encerrado.");
     }
 
     // =========================
-    // ESCOLHA DO USUÁRIO
+    // CADASTRO
     // =========================
-    public static Usuario escolherTipoUsuario(Scanner sc) {
+    public static Usuario cadastrar(Scanner sc, TipoUsuario tipo, List<Usuario> usuarios) {
 
+        System.out.print("Nome: ");
+        String nome = sc.nextLine();
 
-        System.out.println("1 - Cidadão");
-        System.out.println("2 - Anônimo");
-        System.out.println("3 - Gestor");
-        System.out.println("Escolha o tipo de usuário:");
+        System.out.print("CPF: ");
+        String cpf = sc.nextLine();
 
-        int opcao = sc.nextInt();
-        sc.nextLine();
+        String email;
+        while (true) {
+            System.out.print("Email: ");
+            email = sc.nextLine();
 
-        if (opcao == 1) {
-            System.out.print("Nome: ");
-            return new Usuario(sc.nextLine(), TipoUsuario.CIDADAO);
-        } else if (opcao == 2) {
-            return new Usuario(null, TipoUsuario.ANONIMO);
-        } else {
-            return new Usuario("Gestor", TipoUsuario.GESTOR);
+            if (!validarEmail(email)) {
+                System.out.println("Email inválido!");
+                continue;
+            }
+
+            if (emailJaExiste(email, usuarios)) {
+                System.out.println("Email já cadastrado!");
+                continue;
+            }
+
+            break;
         }
+
+        System.out.print("Senha: ");
+        String senha = sc.nextLine();
+
+        Usuario novo = new Usuario(nome, tipo, cpf, email, senha);
+        usuarios.add(novo);
+
+        System.out.println("Cadastro realizado com sucesso!");
+
+        return novo;
+    }
+
+    // =========================
+    // LOGIN
+    // =========================
+    public static Usuario login(Scanner sc, TipoUsuario tipo, List<Usuario> usuarios) {
+
+        System.out.print("Email: ");
+        String email = sc.nextLine();
+
+        System.out.print("Senha: ");
+        String senha = sc.nextLine();
+
+        for (Usuario u : usuarios) {
+            if (u.getEmail().equals(email) &&
+                    u.getSenha().equals(senha) &&
+                    u.getTipo() == tipo) {
+
+                System.out.println("Login realizado com sucesso!");
+                return u;
+            }
+        }
+
+        System.out.println("Usuário não encontrado.");
+        return null;
+    }
+
+    // =========================
+    // VALIDADOR DE EMAIL
+    // =========================
+    public static boolean validarEmail(String email) {
+        return email.contains("@") && email.contains(".");
+    }
+
+    public static boolean emailJaExiste(String email, List<Usuario> usuarios) {
+        for (Usuario u : usuarios) {
+            if (u.getEmail().equals(email)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // =========================
@@ -56,7 +169,7 @@ public class Main {
             System.out.println("1 - Criar solicitação");
             System.out.println("2 - Buscar por protocolo");
             System.out.println("3 - Confirmar problema");
-            System.out.println("0 - Sair");
+            System.out.println("0 - Voltar");
 
             opcao = sc.nextInt();
             sc.nextLine();
@@ -67,34 +180,115 @@ public class Main {
                     System.out.print("Descrição: ");
                     String descricao = sc.nextLine();
 
-                    System.out.print("Local: ");
-                    String local = sc.nextLine();
+                    // ===== LOCAL =====
+                    System.out.println("Local:");
+                    System.out.println("1 - HOSPITAL");
+                    System.out.println("2 - ESCOLA");
+                    System.out.println("3 - PRACA");
+                    System.out.println("4 - PREFEITURA");
+                    System.out.println("5 - RUA");
+                    System.out.println("6 - OUTRO");
 
+                    int loc = sc.nextInt();
+                    sc.nextLine();
+
+                    LocalTipo localTipo = LocalTipo.values()[loc - 1];
+
+                    String localOutro = null;
+
+                    if (localTipo == LocalTipo.OUTRO) {
+                        System.out.print("Digite o local: ");
+                        localOutro = sc.nextLine();
+                    }
+
+                    // ===== CATEGORIA =====
                     System.out.println("Categoria:");
                     System.out.println("1 - ILUMINACAO");
                     System.out.println("2 - BURACO");
                     System.out.println("3 - LIMPEZA");
                     System.out.println("4 - SAUDE");
                     System.out.println("5 - SEGURANCA");
+                    System.out.println("6 - OUTRO");
 
                     int cat = sc.nextInt();
                     sc.nextLine();
 
                     Categoria categoria = Categoria.values()[cat - 1];
 
-                    servico.criarSolicitacao(descricao, categoria, local, usuario);
+                    if (categoria == Categoria.OUTRO) {
+                        System.out.print("Digite a categoria: ");
+                        sc.nextLine(); // (opcional armazenar depois)
+                    }
+
+                    // ===== ENDEREÇO =====
+                    System.out.print("Rua: ");
+                    String rua = sc.nextLine();
+
+                    System.out.print("Número: ");
+                    String numero = sc.nextLine();
+
+                    System.out.print("CEP: ");
+                    String cep = sc.nextLine();
+
+                    System.out.print("Bairro: ");
+                    String bairro = sc.nextLine();
+
+                    System.out.print("Cidade: ");
+                    String cidade = sc.nextLine();
+
+                    System.out.print("Estado: ");
+                    String estado = sc.nextLine();
+
+                    Endereco endereco = new Endereco(rua, numero, cep, bairro, cidade, estado);
+
+                    // ===== CRIAR SOLICITAÇÃO =====
+                    servico.criarSolicitacao(
+                            descricao,
+                            categoria,
+                            localTipo,
+                            localOutro,
+                            endereco,
+                            usuario
+                    );
+
                     break;
 
                 case 2:
-                    System.out.print("Protocolo: ");
-                    String protocoloBusca = sc.nextLine();
+                    System.out.println("Buscar por:");
+                    System.out.println("1 - Protocolo");
+                    System.out.println("2 - CPF");
 
-                    Solicitacao s = servico.buscarPorProtocolo(protocoloBusca);
+                    int busca = sc.nextInt();
+                    sc.nextLine();
 
-                    if (s != null) {
-                        System.out.println(s);
-                    } else {
-                        System.out.println("Não encontrada.");
+                    if (busca == 1) {
+
+                        System.out.print("Protocolo: ");
+                        String protocolo = sc.nextLine();
+
+                        Solicitacao s = servico.buscarPorProtocolo(protocolo);
+
+                        if (s != null) {
+                            System.out.println(s);
+                        } else {
+                            System.out.println("Não encontrada.");
+                        }
+
+                    } else if (busca == 2) {
+
+                        System.out.print("CPF: ");
+                        String cpf = sc.nextLine();
+
+                        List<Solicitacao> lista = servico.buscarPorCPF(cpf);
+
+                        if (lista.isEmpty()) {
+                            System.out.println("Nenhuma solicitação encontrada.");
+                        } else {
+                            for (Solicitacao s : lista) {
+                                System.out.println(s);
+                            }
+                        }
+
                     }
                     break;
 
@@ -119,7 +313,7 @@ public class Main {
             System.out.println("\n--- MENU GESTOR ---");
             System.out.println("1 - Listar solicitações");
             System.out.println("2 - Atualizar status");
-            System.out.println("0 - Sair");
+            System.out.println("0 - Voltar");
 
             opcao = sc.nextInt();
             sc.nextLine();
@@ -143,7 +337,7 @@ public class Main {
                     int st = sc.nextInt();
                     sc.nextLine();
 
-                    Status status = Status.values()[st];
+                    Status status = Status.values()[st - 1];
 
                     System.out.print("Comentário: ");
                     String comentario = sc.nextLine();

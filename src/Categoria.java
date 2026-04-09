@@ -3,5 +3,6 @@ public enum Categoria {
     BURACO,
     LIMPEZA,
     SAUDE,
-    SEGURANCA
+    SEGURANCA,
+    OUTRO
 }
