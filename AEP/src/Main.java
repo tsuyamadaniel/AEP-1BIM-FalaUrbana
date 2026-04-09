@@ -57,6 +57,16 @@ public class Main {
         }
     }
 
+    public static void mostrarLista(List<Solicitacao> lista) {
+        if (lista.isEmpty()) {
+            System.out.println("Nenhuma solicitação encontrada.");
+        } else {
+            for (Solicitacao s : lista) {
+                System.out.println(s);
+            }
+        }
+    }
+
     public static void main(String[] args) {
 
         Scanner sc = new Scanner(System.in);
@@ -211,6 +221,7 @@ public class Main {
                 "Voltar",
                 "Nova solicitação",
                 "Buscar por protocolo",
+                "Buscar por local",
                 "Confirmar ocorrência",
                 "Minhas solicitações"
         };
@@ -318,13 +329,58 @@ public class Main {
                     break;
 
                 case 4:
+                    header("BUSCAR POR LOCAL", usuario);
+
+                    System.out.println("Buscar por:");
+                    System.out.println("[1] - Tipo de Local");
+                    System.out.println("[2] - Bairro");
+
+                    int opBusca = lerOpcaoValida(sc, 2);
+
+                    if (opBusca == 1) {
+
+                        System.out.println("\nTipo de local:");
+                        LocalTipo[] locaisBusca = LocalTipo.values();
+
+                        for (int i = 0; i < locaisBusca.length; i++) {
+                            System.out.println((i + 1) + " - " + formatarEnum(locaisBusca[i]));
+                        }
+
+                        LocalTipo tipo = locaisBusca[lerOpcaoValida(sc, locaisBusca.length) - 1];
+
+                        List<Solicitacao> lista = servico.buscarPorLocalTipo(tipo);
+
+                        if (lista.isEmpty()) {
+                            System.out.println("Nenhuma solicitação encontrada.");
+                        } else {
+                            lista.forEach(System.out::println);
+                        }
+
+                    } else {
+
+                        System.out.print("Digite o bairro: ");
+                        String bairroBusca = sc.nextLine();
+
+                        List<Solicitacao> lista = servico.buscarPorBairro(bairroBusca);
+
+                        if (lista.isEmpty()) {
+                            System.out.println("Nenhuma solicitação encontrada.");
+                        } else {
+                            lista.forEach(System.out::println);
+                        }
+                    }
+
+                    pausar(sc);
+                    break;
+
+                case 5:
                     System.out.println("Use essa opção caso o problema ainda NÃO foi resolvido.");
                     System.out.print("Protocolo: ");
                     servico.confirmarSolicitacao(sc.nextLine());
                     pausar(sc);
                     break;
 
-                case 5:
+                case 6:
                     if (usuario.isAnonimo()) {
                         System.out.println("Usuário anônimo não possui histórico.");
                     } else {
@@ -351,7 +407,8 @@ public class Main {
         String[] opcoes = {
                 "Voltar",
                 "Listar solicitações",
-                "Atualizar status"
+                "Atualizar status",
+                "Buscar solicitações"
         };
 
         do {
@@ -389,6 +446,81 @@ public class Main {
                     servico.atualizarStatus(protocolo, status, comentario, usuario.getNome());
 
                     System.out.println("Status atualizado!");
+                    pausar(sc);
+                    break;
+
+                case 4:
+                    menuBusca(sc, servico);
+                    break;
+            }
+
+        } while (opcao != 1);
+    }
+
+    public static void menuBusca(Scanner sc, ServicoSolicitacoes servico) {
+
+        int opcao;
+
+        String[] opcoes = {
+                "Voltar",
+                "Por tipo de local",
+                "Por status",
+                "Por prioridade",
+                "Por bairro"
+        };
+
+        do {
+            header("BUSCAR SOLICITAÇÕES", null);
+            menu(opcoes);
+
+            opcao = lerOpcaoValida(sc, opcoes.length);
+
+            switch (opcao) {
+
+                case 1:
+                    break;
+
+                case 2: // LOCAL
+                    System.out.println("\nTipo de local:");
+                    LocalTipo[] locais = LocalTipo.values();
+
+                    for (int i = 0; i < locais.length; i++) {
+                        System.out.println((i + 1) + " - " + formatarEnum(locais[i]));
+                    }
+
+                    LocalTipo tipoLocal = locais[lerOpcaoValida(sc, locais.length) - 1];
+
+                    mostrarLista(servico.buscarPorLocalTipo(tipoLocal));
+                    pausar(sc);
+                    break;
+
+                case 3: // STATUS
+                    System.out.println("\nStatus:");
+                    Status[] statusList = Status.values();
+
+                    for (int i = 0; i < statusList.length; i++) {
+                        System.out.println((i + 1) + " - " + formatarEnum(statusList[i]));
+                    }
+
+                    Status status = statusList[lerOpcaoValida(sc, statusList.length) - 1];
+
+                    mostrarLista(servico.buscarPorStatus(status));
+                    pausar(sc);
+                    break;
+
+                case 4: // PRIORIDADE
+                    System.out.print("Digite a prioridade (ALTA/NORMAL): ");
+                    String prioridade = sc.nextLine();
+
+                    mostrarLista(servico.buscarPorPrioridade(prioridade));
+                    pausar(sc);
+                    break;
+
+                case 5: // BAIRRO
+                    System.out.print("Digite o bairro: ");
+                    String bairro = sc.nextLine();
+
+                    mostrarLista(servico.buscarPorBairro(bairro));
                     pausar(sc);
                     break;
             }
