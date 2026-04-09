@@ -1,3 +1,7 @@
+package models;
+
+import enums.Status;
+
 import java.time.LocalDateTime;
 
 public class HistoricoStatus {
@@ -14,6 +18,7 @@ public class HistoricoStatus {
     }
 
     public String toString() {
-        return data + " - " + status + " (" + responsavel + "): " + comentario;
+        String var10000 = String.valueOf(this.data);
+        return var10000 + " - " + String.valueOf(this.status) + " (" + this.responsavel + "): " + this.comentario;
     }
 }
